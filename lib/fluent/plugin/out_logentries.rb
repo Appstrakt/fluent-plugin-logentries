@@ -7,10 +7,11 @@ class LogentriesOutput < Fluent::BufferedOutput
   # and identifies the plugin in the configuration file.
   Fluent::Plugin.register_output('logentries', self)
 
-  config_param :host,    :string
-  config_param :port,    :integer, :default => 80
-  config_param :path,    :string
-  config_param :use_ssl, :bool, :default => false
+  config_param :host,        :string
+  config_param :port,        :integer, :default => 80
+  config_param :path,        :string
+  config_param :use_ssl,     :bool, :default => false
+  config_param :ssl_ca_file, :string
 
   def configure(conf)
     super
@@ -27,6 +28,8 @@ class LogentriesOutput < Fluent::BufferedOutput
   def client
     @_socket ||= if @use_ssl
       context = OpenSSL::SSL::SSLContext.new
+      context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      context.ca_file = @ssl_ca_file
       socket = TCPSocket.new @host, @port
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
